@@ -64,7 +64,7 @@ Overall research plan:
 
 Your specific subtask (ID: {subtask_id}, Title: {subtask_title}) is:
 
-"""{subtask_description}"""
+\"\"\"{subtask_description}\"\"\""
 
 Instructions:
 - Focus ONLY on this subtask, but keep the global query in mind for context.
@@ -96,11 +96,11 @@ COORDINATOR_PROMPT_TEMPLATE = """
 You are the LEAD RESEARCH COORDINATOR AGENT.
 
 The user has asked:
-"""{user_query}"""
+\"\"\"{user_query}\"\"\"
 
 A detailed research plan has already been created:
 
-"""{research_plan}"""
+\"\"\"{research_plan}\"\"\""
 
 This plan has been split into the following subtasks (JSON):
 
