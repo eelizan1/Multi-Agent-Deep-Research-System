@@ -1,0 +1,54 @@
+import os
+import json
+from pydantic import BaseModel, Field
+from typing import List
+from huggingface_hub import InferenceClient
+from prompts import TASK_SPLITTER_SYSTEM_INSTRUCTIONS
+
+
+class Subtask(BaseModel):
+    id: str = Field(..., description="Short identifier for the subtask (e.g. 'A')")
+    title: str = Field(..., description="Short descriptive title of the subtask.")
+    description: str = Field(..., description="Detailed instructions for the sub-agent.")
+
+
+class SubtaskList(BaseModel):
+    subtasks: List[Subtask]
+
+
+TASK_SPLITTER_JSON_SCHEMA = {
+    "name": "subtaskList",
+    "schema": SubtaskList.model_json_schema(),
+    "strict": True,
+}
+
+
+def split_into_subtasks(research_plan: str) -> List[dict]:
+    MODEL_ID = "openai/gpt-oss-120b"
+    PROVIDER = "together"
+
+    print("Splitting the research plan into substasks...")
+    print("MODEL: ", MODEL_ID)
+    print("PROVIDER: ", PROVIDER)
+
+    client = InferenceClient(api_key=os.environ.get("HF_TOKEN"), provider=PROVIDER)
+
+    completion = client.chat_completion(
+        model=MODEL_ID,
+        messages=[
+            {"role": "system", "content": TASK_SPLITTER_SYSTEM_INSTRUCTIONS},
+            {"role": "user", "content": research_plan},
+        ],
+        response_format={
+            "type": "json_schema",
+            "json_schema": TASK_SPLITTER_JSON_SCHEMA,
+        },
+    )
+
+    message = completion.choices[0].message
+    subtasks = json.loads(message.content)["subtasks"]
+
+    print("\033[93mGenerated The Following Subtasks\033[0m")
+    for task in subtasks:
+        print(f"\033[93m{task['title']}\033[0m")
+    return subtasks
