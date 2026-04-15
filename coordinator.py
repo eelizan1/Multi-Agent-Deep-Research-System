@@ -64,6 +64,7 @@ def run_deep_research(user_query: str) -> str:
                 model=subagent_model,
                 add_base_tools=False,
                 name=f"subagent_{subtask_id}",
+                structured_output=False,
             )
 
             subagent_prompt = SUBAGENT_PROMPT_TEMPLATE.format(
@@ -81,6 +82,7 @@ def run_deep_research(user_query: str) -> str:
             model=coordinator_model,
             add_base_tools=False,
             name="coordinator_agent",
+            structured_output=False,
         )
 
         subtasks_json = json.dumps(subtasks, indent=2, ensure_ascii=False)
