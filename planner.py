@@ -2,6 +2,7 @@ import os
 from huggingface_hub import InferenceClient
 from prompts import PLANNER_SYSTEM_INSTRUCTIONS
 
+
 def generate_research_plan(user_query: str) -> str:
     MODEL_ID = "moonshotai/Kimi-K2-Thinking"
     PROVIDER = "auto"
@@ -11,7 +12,7 @@ def generate_research_plan(user_query: str) -> str:
     print("PROVIDER: ", PROVIDER)
 
     planner_client = InferenceClient(
-        api_key=os.environ.get("HF_TOKEN"),
+        api_key=os.environ["HF_TOKEN"],
         provider=PROVIDER,
     )
 
@@ -21,11 +22,32 @@ def generate_research_plan(user_query: str) -> str:
             {"role": "system", "content": PLANNER_SYSTEM_INSTRUCTIONS},
             {"role": "user", "content": user_query},
         ],
+        stream=True,
     )
 
-    research_plan = completion.choices[0].message.content
+    print("\033[93mGenerated Research Plan:\033[0m")
+    research_plan = ""
 
-    print("\033[93mGenerated Research Plan\033[0m")
-    print(f"\033[93m{research_plan}\033[0m")
+    def _content(obj):
+        try:
+            return obj.choices[0].delta.content
+        except Exception:
+            try:
+                return obj.choices[0].message.content
+            except Exception:
+                return None
 
+    try:
+        for chunk in completion:
+            c = _content(chunk)
+            if c:
+                research_plan += c
+                print(c, end="", flush=True)
+    except TypeError:
+        c = _content(completion)
+        if c:
+            research_plan = c
+            print(c, end="")
+
+    print()
     return research_plan

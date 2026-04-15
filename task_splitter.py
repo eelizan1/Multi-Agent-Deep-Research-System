@@ -24,16 +24,16 @@ TASK_SPLITTER_JSON_SCHEMA = {
 
 
 def split_into_subtasks(research_plan: str) -> List[dict]:
-    MODEL_ID = "openai/gpt-oss-120b"
-    PROVIDER = "together"
+    MODEL_ID = "deepseek-ai/DeepSeek-V3.2-Exp"
+    PROVIDER = "novita"
 
-    print("Splitting the research plan into substasks...")
+    print("Splitting the research plan into subtasks...")
     print("MODEL: ", MODEL_ID)
     print("PROVIDER: ", PROVIDER)
 
-    client = InferenceClient(api_key=os.environ.get("HF_TOKEN"), provider=PROVIDER)
+    client = InferenceClient(api_key=os.environ["HF_TOKEN"], provider=PROVIDER)
 
-    completion = client.chat_completion(
+    completion = client.chat.completions.create(
         model=MODEL_ID,
         messages=[
             {"role": "system", "content": TASK_SPLITTER_SYSTEM_INSTRUCTIONS},
@@ -51,4 +51,6 @@ def split_into_subtasks(research_plan: str) -> List[dict]:
     print("\033[93mGenerated The Following Subtasks\033[0m")
     for task in subtasks:
         print(f"\033[93m{task['title']}\033[0m")
+        print(f"\033[93m{task['description']}\033[0m")
+        print()
     return subtasks

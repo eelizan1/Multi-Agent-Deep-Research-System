@@ -1,0 +1,12 @@
+[project]
+name = "multi-agent-deep-research-system"
+version = "0.1.0"
+description = "Multi-agent deep research system powered by Firecrawl and HuggingFace"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "python-dotenv>=1.2.1",
+    "smolagents[litellm,mcp,openai]>=1.23.0",
+    "huggingface-hub>=0.27.0",
+    "pydantic>=2.0.0",
+]

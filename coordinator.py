@@ -1,16 +1,18 @@
 import os
 import json
+from dotenv import load_dotenv
 from prompts import SUBAGENT_PROMPT_TEMPLATE, COORDINATOR_PROMPT_TEMPLATE
 from planner import generate_research_plan
 from task_splitter import split_into_subtasks
 from smolagents import ToolCallingAgent, MCPClient, tool, InferenceClientModel
 
+load_dotenv()
 
-FIRECRAWL_API_KEY = os.environ.get("FIRECRAWL_API_KEY")
+FIRECRAWL_API_KEY = os.environ["FIRECRAWL_API_KEY"]
 MCP_URL = f"https://mcp.firecrawl.dev/{FIRECRAWL_API_KEY}/v2/mcp"
 
-COORDINATOR_MODEL_ID = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
-SUBAGENT_MODEL_ID = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
+COORDINATOR_MODEL_ID = "MiniMaxAI/MiniMax-M1-80k"
+SUBAGENT_MODEL_ID = "MiniMaxAI/MiniMax-M1-80k"
 
 
 def run_deep_research(user_query: str) -> str:
@@ -24,22 +26,37 @@ def run_deep_research(user_query: str) -> str:
 
     coordinator_model = InferenceClientModel(
         model_id=COORDINATOR_MODEL_ID,
-        api_key=os.environ.get("HF_TOKEN"),
-        provider="nscale",
-        bill_to="huggingface",
+        api_key=os.environ["HF_TOKEN"],
+        provider="novita",
     )
 
     subagent_model = InferenceClientModel(
         model_id=SUBAGENT_MODEL_ID,
-        api_key=os.environ.get("HF_TOKEN"),
-        provider="nscale",
-        bill_to="huggingface",
+        api_key=os.environ["HF_TOKEN"],
+        provider="novita",
     )
 
     with MCPClient({"url": MCP_URL, "transport": "streamable-http"}) as mcp_tools:
 
         @tool
         def initialize_subagent(subtask_id: str, subtask_title: str, subtask_description: str) -> str:
+            """
+            Spawn a dedicated research sub-agent for a single subtask.
+
+            Args:
+                subtask_id (str): The unique identifier for the subtask.
+                subtask_title (str): The descriptive title of the subtask.
+                subtask_description (str): Detailed instructions for the sub-agent to perform the subtask.
+
+            The sub-agent:
+            - Has access to the Firecrawl MCP tools.
+            - Must perform deep research ONLY on this subtask.
+            - Returns a structured markdown report with:
+              - a clear heading identifying the subtask,
+              - a narrative explanation,
+              - bullet-point key findings,
+              - explicit citations / links to sources.
+            """
             print(f"Initializing Subagent for task {subtask_id}...")
 
             subagent = ToolCallingAgent(
